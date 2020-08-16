@@ -22,13 +22,13 @@ from enum import Enum, auto
 import random
 import numpy
 
+continue_main = True
+
 BOARD_SIZE = 3
 SPACE = ' '
-ESC = chr(27) 
+ESC = chr(27)
 X = 'X'
 O = 'O'
-
-
 
 MAJOR_VERSION = '0'
 MINOR_VERSION = '1'
@@ -109,9 +109,8 @@ def play_opponent_turn(board: List[List[str]], opponent_symbol: str) -> None:
     """Plays a move for the computer. Currently picks a random empty space on the board."""
     space_found = False
     while not space_found:
-        row = random.randint(0, BOARD_SIZE)
-        column = random.randint(0, BOARD_SIZE)
-        
+        row = random.randint(0, BOARD_SIZE - 1)
+        column = random.randint(0, BOARD_SIZE - 1)
         if board[row][column] == SPACE:
             board[row][column] = opponent_symbol
             space_found = True
@@ -148,7 +147,7 @@ def symbol_won(board: List[List[str]], symbol: str) -> bool:
         if all_elements_are_symbol:
             return True
 
-    #Check diagonals    
+    #Check diagonals
     all_elements_are_symbol = True
     for i in range(BOARD_SIZE):
         if board[i][i] != symbol:
@@ -167,99 +166,122 @@ def symbol_won(board: List[List[str]], symbol: str) -> bool:
 
     return False
 
-def main():
-    """The main function. It controls the overall loop of the game"""
-    still_playing = True
-    while still_playing:
-        board = [[SPACE for j in range(BOARD_SIZE)] for i in range(BOARD_SIZE)]
-        
+def play_game() -> None:
+    """Plays a single game"""
+    board = [[SPACE for j in range(BOARD_SIZE)] for i in range(BOARD_SIZE)]
+    wipe_screen()
+    player_symbol = input('Pick your symbol, X or O (X is default): ')
+    player_symbol = player_symbol.capitalize()
+    opponent_symbol = ''
+    
+    if player_symbol == O:
+        opponent_symbol = X
+    else:
+        player_symbol = X
+        opponent_symbol = O
+
+    if player_symbol == O:
+        play_opponent_turn(board, opponent_symbol)
+    game_state = GameEndStates.TIE
+    game_over = False
+    while not game_over:
         wipe_screen()
-        player_symbol = input('Pick your symbol, X or O (X is default): ')
-        
-        player_symbol = player_symbol.capitalize()
+        print(f'You are playing as {player_symbol}')
+        print_board(board)
+        valid_move = False
+        row = -1
+        column = -1
 
-        opponent_symbol = ''
-        
-        if player_symbol == O:
-            opponent_symbol = X
-        else:
-            player_symbol = X
-            opponent_symbol = O
+        while not valid_move:
+            row = input('Enter the row for your move: ')
+            column = input('Enter the column for your move: ')
+            inputs_are_ints = False
 
-        if player_symbol == O:
-            play_opponent_turn(board, opponent_symbol)
-        
-        game_state = GameEndStates.TIE
-        game_over = False
-        while not game_over:
-            wipe_screen()
-            print(f'You are playing as {player_symbol}')
-            print_board(board)
-            
-            valid_move = False
-            
-            row = -1
-            column = -1
-
-            while not valid_move:
-                row = input('Enter the row for your move: ')
-                column = input('Enter the column for your move: ')
-                
+            try:
+                row = int(row)
+                column = int(column)
+                inputs_are_ints = True
+            except ValueError:
                 inputs_are_ints = False
 
-                try:
-                    row = int(row)
-                    column = int(column)
-                    inputs_are_ints = True
-                except ValueError:
-                    inputs_are_ints = False
-        
-                if(inputs_are_ints):
-                    row -= 1
-                    column -= 1
-                
-                valid_move = inputs_are_ints and row in range(len(board)) and column in range(len(board[row])) and board[row][column] == SPACE 
+            if inputs_are_ints:
+                row -= 1
+                column -= 1
 
-                if valid_move:
-                    board[row][column] = player_symbol
-                else:
-                    print('\nInvalid move, please try again')
-           
+            valid_move = inputs_are_ints and row in range(len(board)) and column in range(len(board[row])) and board[row][column] == SPACE
 
-            if symbol_won(board, player_symbol):
-                game_over = True
-                game_state = GameEndStates.WIN      
-                break
-            if not has_empty_spaces(board):
-                game_over = True
-                game_state = GameEndStates.TIE
-                break
+            if valid_move:
+                board[row][column] = player_symbol
+            else:
+                print('\nInvalid move, please try again')
 
-            print_board(board)
+        if symbol_won(board, player_symbol):
+            game_over = True
+            game_state = GameEndStates.WIN
+            break
+        if not has_empty_spaces(board):
+            game_over = True
+            game_state = GameEndStates.TIE
+            break
 
-            play_opponent_turn(board, opponent_symbol)
-            
-            if symbol_won(board, opponent_symbol):
-                game_over = True
-                game_state = GameEndStates.LOSS
-                break
-            if not has_empty_spaces(board):
-                game_over = True
-                game_state = GameEndStates.TIE
-                break
-        
-        switcher = {
-            GameEndStates.WIN: print_win,
-            GameEndStates.LOSS: print_loss,
-            GameEndStates.TIE: print_tie
-        }
-
-        wipe_screen()
-        switcher.get(game_state)()
         print_board(board)
-        continue_prompt = input('Play again? (y/N):').capitalize()
-        still_playing = continue_prompt == 'Y'
 
+        play_opponent_turn(board, opponent_symbol)
+
+        if symbol_won(board, opponent_symbol):
+            game_over = True
+            game_state = GameEndStates.LOSS
+            break
+        if not has_empty_spaces(board):
+            game_over = True
+            game_state = GameEndStates.TIE
+            break
+
+    switcher = {
+        GameEndStates.WIN: print_win,
+        GameEndStates.LOSS: print_loss,
+        GameEndStates.TIE: print_tie
+    }
+
+    wipe_screen()
+    switcher.get(game_state)()
+    print_board(board)
+
+
+def quit_program() -> None:
+    """Sets the continue_main variable to False so that the main loop terminates"""
+    global continue_main
+    continue_main = False
+
+def print_error() -> None:
+    """Wipes the screen and prints out an error"""
+    wipe_screen()
+    print("Invalid choice, try again.")
+
+def main():
+    """The main function. It controls the overall loop of the program"""
+    wipe_screen()
+    global continue_main
+    continue_main = True
+    while continue_main:
+ 
+        try:
+            option = int(input("""Choose one of the following options.
+
+    1. Play  
+    2. About
+    3. Quit
+            
+Enter number: """))
+        except ValueError:
+            option = 0
+
+        main_menu = {
+            1: play_game,
+            2: print_about,
+            3: quit_program
+        }.get(option, print_error)
+        main_menu()
 
 if __name__ == '__main__':
     main()
