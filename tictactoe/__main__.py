@@ -20,7 +20,6 @@
 from typing import List
 from enum import Enum, auto
 import random
-import numpy
 
 continue_main = True
 
@@ -32,7 +31,7 @@ O = 'O'
 
 MAJOR_VERSION = '0'
 MINOR_VERSION = '1'
-MICRO_VERSION = '0'
+MICRO_VERSION = '1'
 VERSION = "{}.{}.{}".format(MAJOR_VERSION, MINOR_VERSION, MICRO_VERSION)
 
 ABOUT = f"""tic-tac-toe-py {VERSION} - Fork me at <https://github.com/CorruptedArk/tic-tac-toe-py>
@@ -124,6 +123,15 @@ def has_empty_spaces(board: List[List[str]]) -> bool:
             break
     return has_space
 
+def transpose(matrix: List[[str]]) -> List[List[str]]: 
+    """Returns the transpose of a matrix, assumes matrix is rectangular"""
+    transpose_matrix = [[SPACE for j in range(len(matrix))] for i in range(len(matrix[0]))]
+    for i in range(len(transpose_matrix)):
+        for j in range(len(transpose_matrix[i])):
+            transpose_matrix[i][j] = matrix[j][i]
+
+    return transpose_matrix
+
 def symbol_won(board: List[List[str]], symbol: str) -> bool:
     """Returns True if the player represented by symbol has won the game and False otherwise"""
     #Check rows
@@ -137,7 +145,7 @@ def symbol_won(board: List[List[str]], symbol: str) -> bool:
             return True
 
     #Check columns
-    transpose_board = numpy.transpose(board)
+    transpose_board = transpose(board)
     for row in transpose_board:
         all_elements_are_symbol = True
         for element in row:
