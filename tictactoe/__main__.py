@@ -123,7 +123,7 @@ def has_empty_spaces(board: List[List[str]]) -> bool:
             break
     return has_space
 
-def transpose(matrix: List[[str]]) -> List[List[str]]: 
+def transpose(matrix: List[List[str]]) -> List[List[str]]: 
     """Returns the transpose of a matrix, assumes matrix is rectangular"""
     transpose_matrix = [[SPACE for j in range(len(matrix))] for i in range(len(matrix[0]))]
     for i in range(len(transpose_matrix)):
